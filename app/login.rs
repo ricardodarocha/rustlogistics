@@ -1,126 +1,102 @@
-use std::io::{self, Write};
+use crate::visual::*;
+use std::cmp::Ordering;
 
-#[cfg(windows)]
-use windows_sys::Win32::System::Console::{
-    GetConsoleMode, SetConsoleMode, GetStdHandle,
-    STD_OUTPUT_HANDLE, ENABLE_VIRTUAL_TERMINAL_PROCESSING, ENABLE_PROCESSED_OUTPUT,
-};
-#[cfg(windows)]
-use windows_sys::Win32::System::SystemServices::{CP_UTF8, SetConsoleCP, SetConsoleOutputCP};
+const ACESSO_NEGADO: i32 = 0;
+const ACESSO_CONCEDIDO: i32 = 1;
 
-/// Habilita suporte ANSI e UTF-8 no terminal do Windows.
-/// Em Linux/macOS, não faz nada.
-pub fn enable_ansi() {
-    #[cfg(windows)]
-    unsafe {
-        let h_out = GetStdHandle(STD_OUTPUT_HANDLE);
-        if h_out == 0 {
-            return;
-        }
+/// Exibe uma mensagem de boas-vindas.
+pub fn boas_vindas_ao_sistema(login: &str) {
+    println!("\nBem-vindo ao sistema, {login}!\n");
+}
 
-        let mut dw_mode = 0;
-        if GetConsoleMode(h_out, &mut dw_mode) == 0 {
-            return;
-        }
+/// Faz uma comparação *case-insensitive* entre duas strings.
+fn confere(a: &str, b: &str) -> bool {
+    a.eq_ignore_ascii_case(b)
+}
 
-        let _ = SetConsoleMode(
-            h_out,
-            dw_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_PROCESSED_OUTPUT,
-        );
+/// Realiza login de um usuário comum.
+fn user(login: &str) -> i32 {
+    let senha = input_senha("senha");
 
-        SetConsoleOutputCP(CP_UTF8);
-        SetConsoleCP(CP_UTF8);
+    if confere(login, "jacimar") && confere(&senha, "jacimar") {
+        ACESSO_CONCEDIDO
+    } else if confere(login, "wemerson") && confere(&senha, "wemerson") {
+        ACESSO_CONCEDIDO
+    } else if confere(login, "teste") && confere(&senha, "123") {
+        ACESSO_CONCEDIDO
+    } else if confere(login, "sistema") && confere(&senha, "123") {
+        ACESSO_CONCEDIDO
+    } else {
+        ACESSO_NEGADO
     }
 }
 
-/// Exibe um menu de opções e retorna a opção escolhida (inteiro).
-pub fn exibir_menu(operacoes: &str) -> i32 {
-    println!("\n\n{operacoes}");
-    print!(" Escolha uma opção: ");
-    io::stdout().flush().unwrap();
+/// Cria um novo usuário admin (simulação).
+fn admin(login: &mut String) -> i32 {
+    let mut email;
+    let mut senha;
+    let mut repete_senha;
 
-    let mut buffer = String::new();
-    io::stdin().read_line(&mut buffer).unwrap();
-    buffer.trim().parse::<i32>().unwrap_or(0)
-}
+    *login = input_string_required("novo login");
+    email = input_string_required("email");
 
-/// Lê uma string simples com prompt.
-pub fn input_string(prompt: &str) -> String {
-    print!(" {prompt}: ");
-    io::stdout().flush().unwrap();
-
-    let mut buffer = String::new();
-    io::stdin().read_line(&mut buffer).unwrap();
-    buffer.trim().to_string()
-}
-
-/// Lê uma string obrigatória (não vazia).
-pub fn input_string_required(title: &str) -> String {
     loop {
-        print!(" {title}: ");
-        io::stdout().flush().unwrap();
+        senha = input_senha("senha");
+        repete_senha = input_senha("repita a senha");
 
-        let mut buffer = String::new();
-        io::stdin().read_line(&mut buffer).unwrap();
-        let text = buffer.trim();
-
-        if !text.is_empty() {
-            return text.to_string();
+        if confere(&senha, &repete_senha) {
+            break;
+        } else {
+            println!(" senha inválida, tente novamente");
         }
-        println!(" campo requerido");
     }
+
+    boas_vindas_ao_sistema(login);
+    ACESSO_CONCEDIDO
 }
 
-/// Lê um valor de moeda (float).
-pub fn input_moeda(title: &str) -> f32 {
-    print!(" {title}: R$ ");
-    io::stdout().flush().unwrap();
-
-    let mut buffer = String::new();
-    io::stdin().read_line(&mut buffer).unwrap();
-    buffer.trim().parse::<f32>().unwrap_or(0.0)
+/// Verifica permissões do usuário.
+/// (Aqui seria feita a checagem de módulos ativos, permissões, etc.)
+pub fn verificar_permissoes(_login: &str) {
+    // Placeholder
 }
 
-/// Lê um número inteiro.
-pub fn input_inteiro(title: &str) -> i32 {
-    print!(" {title}: ");
-    io::stdout().flush().unwrap();
+/// Efetua o processo completo de login (usuário ou admin).
+pub fn efetuar_login(login: &mut String) -> i32 {
+    let mut tentativas = 3;
 
-    let mut buffer = String::new();
-    io::stdin().read_line(&mut buffer).unwrap();
-    buffer.trim().parse::<i32>().unwrap_or(0)
-}
+    *login = input_string_required("login");
 
-/// Lê um número float.
-pub fn input_float(title: &str) -> f32 {
-    print!(" {title}: ");
-    io::stdout().flush().unwrap();
+    // Caso admin
+    if confere(login, "admin") {
+        loop {
+            let senha = input_senha("senha");
 
-    let mut buffer = String::new();
-    io::stdin().read_line(&mut buffer).unwrap();
-    buffer.trim().parse::<f32>().unwrap_or(0.0)
-}
+            if confere(&senha, "admin") {
+                return admin(login);
+            } else {
+                tentativas -= 1;
+                println!("\nSenha inválida ({tentativas} tentativas restantes)");
 
-/// Pergunta "S/N" e retorna true ou false.
-pub fn input_logico(title: &str) -> bool {
-    print!(" {title}: (S/N) ");
-    io::stdout().flush().unwrap();
-
-    let mut buffer = String::new();
-    io::stdin().read_line(&mut buffer).unwrap();
-    matches!(buffer.trim().to_lowercase().as_str(), "s")
-}
-
-/// Lê senha com máscara (*)
-pub fn input_senha(title: &str) -> String {
-    // Para mascarar os caracteres (****), use `rpassword`:
-    // let senha = rpassword::prompt_password(format!(" {title}: ")).unwrap();
-    // senha.trim().to_string()
-
-    print!(" {title}: ");
-    io::stdout().flush().unwrap();
-
-    let mut senha = String::new();
-    io::stdin().read_line(&mut senha).unwrap();
-    senha.trim().to_string()
+                if tentativas == 0 {
+                    return ACESSO_NEGADO;
+                }
+            }
+        }
+    } else {
+        // Usuário comum
+        loop {
+            if user(login) == ACESSO_CONCEDIDO {
+                boas_vindas_ao_sistema(login);
+                return ACESSO_CONCEDIDO;
+            } else {
+                tentativas -= 1;
+                if tentativas == 0 {
+                    return ACESSO_NEGADO;
+                }
+                println!(" verifique usuário e senha");
+                *login = input_string_required("login");
+            }
+        }
+    }
 }
