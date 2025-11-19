@@ -24,16 +24,6 @@ pub fn team() {
     println!("   ╔══════════════════════════════════════════════════════════════╗");
     println!("   ║                                                              ║");
     println!("   ║     ╔══════════════════════╗    ╔══════════════════════╗     ║");
-    println!("   ║     ║  Wemerson            ║    ║  Maria Eduarda       ║     ║");
-    println!("   ║     ║  Analista            ║    ║  Customer Success    ║     ║");
-    println!("   ║     ║  Dev Pleno           ║    ║  Testadora           ║     ║");
-    println!("   ║     ╚══════════════════════╝    ╚══════════════════════╝     ║");
-    println!("   ║     ╔══════════════════════╗    ╔══════════════════════╗     ║");
-    println!("   ║     ║  Agatta              ║    ║  Otavio              ║     ║");
-    println!("   ║     ║  Frontend            ║    ║  Database Admin      ║     ║");
-    println!("   ║     ║  Designer            ║    ║  ORACLE MVP          ║     ║");
-    println!("   ║     ╚══════════════════════╝    ╚══════════════════════╝     ║");
-    println!("   ║     ╔══════════════════════╗    ╔══════════════════════╗     ║");
     println!("   ║     ║  Nathan              ║    ║  Ricardo             ║     ║");
     println!("   ║     ║  Product Owner       ║    ║  Tech Lead           ║     ║");
     println!("   ║     ║  Chefe Comercial     ║    ║  Dev Senior          ║     ║");
